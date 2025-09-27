@@ -12,7 +12,7 @@
 ### 🔧 Пример FastAPI приложения
 
 Вот код простого FastAPI приложения, которое использует клиентскую библиотеку AnyLogic Cloud для запуска демо-модели и получения результатов.
-
+main.py:
 ```python
 from fastapi import FastAPI, HTTPException
 from anylogiccloudclient.client.cloud_client import CloudClient
