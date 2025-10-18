@@ -19,6 +19,15 @@ anylogic-fastapi-project/
 ```
 
 ### 2. Установка зависимостей
+доустановите системные зависимости на всякий случай в корне проекта anylogic-fastapi-project/
+
+```
+# Установка FastAPI и стандартного набора для сервера (например, Uvicorn)
+pip install "fastapi[standard]"
+
+# Установка клиентской библиотеки AnyLogic Cloud для Python
+pip install https://cloud.anylogic.com/files/api-8.5.0/clients/anylogiccloudclient-8.5.0-py3-none-any.whl
+```
 
 **requirements.txt:**
 ```txt
