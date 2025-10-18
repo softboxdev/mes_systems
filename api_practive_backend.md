@@ -488,7 +488,7 @@ http://127.0.0.1:8001/docs
 4. Нажмите "Execute"
 5. Посмотрите результат в разделе "Responses"
 
-![Swagger GET Example](https://via.placeholder.com/600x400?text=Swagger+GET+Example)
+
 
 ### 3. Тестирование POST /api/v1/simulations/run
 
