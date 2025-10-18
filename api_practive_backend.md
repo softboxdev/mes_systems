@@ -39,6 +39,17 @@ pydantic==2.5.0
 anylogiccloudclient==8.5.0
 ```
 
+Альтернатива:
+
+```
+fastapi
+uvicorn
+python-dotenv
+requests
+pydantic
+anylogiccloudclient
+```
+
 Установка:
 ```bash
 pip install -r requirements.txt
