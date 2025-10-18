@@ -372,7 +372,6 @@ async def run_simulation(request: SimulationRequest, client: CloudClient = Depen
     # ваш код
 ```
 
-Это руководство предоставляет полную структуру для создания FastAPI приложения, интегрированного с AnyLogic Cloud API, с поддержкой как клиентской библиотеки, так и прямых REST запросов.
 
 
 ## Что делать если порт занят:
@@ -465,3 +464,351 @@ fastapi dev app/main.py --port 8001
 ```
 
 После успешного запуска вы сможете открыть документацию API по адресу http://127.0.0.1:8001/docs и протестировать эндпоинты.
+
+# Подробная инструкция по тестированию API для начинающих
+
+## Способ 1: Тестирование через документацию Swagger UI (Самый простой)
+
+### 1. Откройте документацию API
+После запуска сервера откройте в браузере:
+```
+http://127.0.0.1:8000/docs
+```
+или если используете порт 8001:
+```
+http://127.0.0.1:8001/docs
+```
+
+### 2. Тестирование GET /api/v1/models
+
+**В документации Swagger:**
+1. Найдите раздел "simulations"
+2. Найдите метод "GET /api/v1/models"
+3. Нажмите кнопку "Try it out"
+4. Нажмите "Execute"
+5. Посмотрите результат в разделе "Responses"
+
+![Swagger GET Example](https://via.placeholder.com/600x400?text=Swagger+GET+Example)
+
+### 3. Тестирование POST /api/v1/simulations/run
+
+**В документации Swagger:**
+1. Найдите метод "POST /api/v1/simulations/run"
+2. Нажмите "Try it out"
+3. Измените параметры в JSON (или оставьте значения по умолчанию):
+```json
+{
+  "server_capacity": 10,
+  "model_name": "Service System Demo",
+  "experiment_name": "Baseline"
+}
+```
+4. Нажмите "Execute"
+5. Посмотрите результат
+
+## Способ 2: Тестирование с помощью Python скриптов
+
+### Создайте тестовый скрипт `test_api.py`:
+
+```python
+import requests
+import json
+
+# Базовый URL вашего API
+BASE_URL = "http://127.0.0.1:8000/api/v1"
+
+def test_get_models():
+    """
+    Тестирование GET запроса для получения списка моделей
+    """
+    print("=== Тестирование GET /api/v1/models ===")
+    
+    # Формируем полный URL для запроса
+    url = f"{BASE_URL}/models"
+    
+    try:
+        # Выполняем GET запрос
+        response = requests.get(url)
+        
+        # Проверяем статус ответа
+        print(f"Статус код: {response.status_code}")
+        
+        # Если запрос успешен (статус 200)
+        if response.status_code == 200:
+            # Преобразуем JSON ответ в словарь Python
+            data = response.json()
+            print("✅ Успешный ответ!")
+            print(f"Получено моделей: {len(data.get('models', []))}")
+            
+            # Выводим информацию о каждой модели
+            for model in data.get('models', []):
+                print(f"  - Модель: {model.get('name')} (ID: {model.get('id')})")
+                
+        else:
+            print("❌ Ошибка при запросе")
+            print(f"Ответ: {response.text}")
+            
+    except Exception as e:
+        print(f"❌ Произошла ошибка: {e}")
+
+def test_post_simulation(server_capacity=8):
+    """
+    Тестирование POST запроса для запуска симуляции
+    
+    Args:
+        server_capacity (int): Количество серверов для симуляции
+    """
+    print(f"\n=== Тестирование POST /api/v1/simulations/run ===")
+    print(f"Параметр server_capacity: {server_capacity}")
+    
+    # Формируем полный URL для запроса
+    url = f"{BASE_URL}/simulations/run"
+    
+    # Подготавливаем данные для отправки (тело запроса)
+    payload = {
+        "server_capacity": server_capacity,
+        "model_name": "Service System Demo", 
+        "experiment_name": "Baseline"
+    }
+    
+    # Указываем заголовки (Content-Type для JSON)
+    headers = {
+        "Content-Type": "application/json"
+    }
+    
+    try:
+        # Выполняем POST запрос
+        # json=payload автоматически преобразует словарь в JSON и устанавливает заголовки
+        response = requests.post(url, json=payload, headers=headers)
+        
+        print(f"Статус код: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print("✅ Симуляция успешно выполнена!")
+            print(f"ID симуляции: {data.get('simulation_id')}")
+            print(f"Размер очереди: {data.get('mean_queue_size')}")
+            print(f"Загрузка серверов: {data.get('server_utilization')}")
+            
+            # Дополнительная информация
+            print("\n📊 Детали результатов:")
+            raw_outputs = data.get('raw_outputs', {})
+            for key, value in list(raw_outputs.items())[:5]:  # Покажем первые 5 результатов
+                print(f"  {key}: {value}")
+                
+        else:
+            print("❌ Ошибка при выполнении симуляции")
+            print(f"Ответ сервера: {response.text}")
+            
+    except Exception as e:
+        print(f"❌ Произошла ошибка: {e}")
+
+def test_multiple_simulations():
+    """
+    Тестирование нескольких симуляций с разными параметрами
+    """
+    print("\n=== Тестирование нескольких симуляций ===")
+    
+    # Тестируем с разным количеством серверов
+    for capacity in [5, 8, 12, 15]:
+        test_post_simulation(server_capacity=capacity)
+        print("-" * 50)
+
+if __name__ == "__main__":
+    """
+    Главная функция - точка входа в программу
+    """
+    print("🚀 Начало тестирования AnyLogic FastAPI")
+    print("=" * 60)
+    
+    # Тест 1: Получение списка моделей
+    test_get_models()
+    
+    # Тест 2: Одиночная симуляция
+    test_post_simulation(server_capacity=10)
+    
+    # Тест 3: Несколько симуляций (раскомментируйте для теста)
+    # test_multiple_simulations()
+    
+    print("\n" + "=" * 60)
+    print("✅ Тестирование завершено!")
+```
+
+### Как запустить тестовый скрипт:
+
+1. **Установите библиотеку requests** (если еще не установлена):
+```bash
+pip install requests
+```
+
+2. **Запустите скрипт**:
+```bash
+python test_api.py
+```
+
+## Способ 3: Тестирование с помощью curl (командная строка)
+
+### GET запрос для получения моделей:
+```bash
+curl -X 'GET' \
+  'http://127.0.0.1:8000/api/v1/models' \
+  -H 'accept: application/json'
+```
+
+### POST запрос для запуска симуляции:
+```bash
+curl -X 'POST' \
+  'http://127.0.0.1:8000/api/v1/simulations/run' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "server_capacity": 10,
+  "model_name": "Service System Demo",
+  "experiment_name": "Baseline"
+}'
+```
+
+## Способ 4: Тестирование через Postman
+
+### Настройка запроса GET:
+1. **Метод**: GET
+2. **URL**: `http://127.0.0.1:8000/api/v1/models`
+3. **Headers**: 
+   - `Content-Type: application/json`
+
+### Настройка запроса POST:
+1. **Метод**: POST
+2. **URL**: `http://127.0.0.1:8000/api/v1/simulations/run`
+3. **Headers**:
+   - `Content-Type: application/json`
+4. **Body** (raw JSON):
+```json
+{
+  "server_capacity": 10,
+  "model_name": "Service System Demo",
+  "experiment_name": "Baseline"
+}
+```
+
+## Полный пример с обработкой ошибок
+
+```python
+import requests
+import time
+
+def advanced_api_test():
+    """
+    Продвинутое тестирование с обработкой ошибок и повторами
+    """
+    BASE_URL = "http://127.0.0.1:8000/api/v1"
+    
+    # Ждем пока сервер запустится
+    print("⏳ Ожидание запуска сервера...")
+    time.sleep(2)
+    
+    # Тестируем доступность сервера
+    try:
+        health_response = requests.get("http://127.0.0.1:8000/health", timeout=5)
+        if health_response.status_code == 200:
+            print("✅ Сервер доступен")
+        else:
+            print("⚠️ Сервер отвечает, но с ошибкой")
+    except:
+        print("❌ Сервер не доступен. Убедитесь, что он запущен на порту 8000")
+        return
+    
+    # Тест получения моделей
+    print("\n1. Тестируем получение списка моделей...")
+    try:
+        response = requests.get(f"{BASE_URL}/models", timeout=10)
+        
+        if response.status_code == 200:
+            models = response.json().get('models', [])
+            if models:
+                print(f"✅ Найдено {len(models)} моделей:")
+                for model in models:
+                    print(f"   📁 {model['name']}")
+            else:
+                print("⚠️ Модели не найдены")
+        else:
+            print(f"❌ Ошибка HTTP {response.status_code}: {response.text}")
+            
+    except requests.exceptions.Timeout:
+        print("❌ Таймаут запроса")
+    except requests.exceptions.ConnectionError:
+        print("❌ Ошибка подключения")
+    except Exception as e:
+        print(f"❌ Неожиданная ошибка: {e}")
+    
+    # Тест запуска симуляции
+    print("\n2. Тестируем запуск симуляции...")
+    test_data = [
+        {"capacity": 5, "expected_queue": "high"},
+        {"capacity": 8, "expected_queue": "medium"}, 
+        {"capacity": 12, "expected_queue": "low"}
+    ]
+    
+    for test in test_data:
+        print(f"\n   🧪 Тест с {test['capacity']} серверами:")
+        
+        payload = {
+            "server_capacity": test["capacity"],
+            "model_name": "Service System Demo",
+            "experiment_name": "Baseline"
+        }
+        
+        try:
+            response = requests.post(
+                f"{BASE_URL}/simulations/run", 
+                json=payload, 
+                timeout=30  # Даем больше времени для симуляции
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                queue_size = result.get('mean_queue_size', 0)
+                utilization = result.get('server_utilization', 0)
+                
+                print(f"      ✅ Успех! Очередь: {queue_size:.2f}, Загрузка: {utilization:.1%}")
+            else:
+                print(f"      ❌ Ошибка {response.status_code}: {response.text}")
+                
+        except requests.exceptions.Timeout:
+            print("      ❌ Таймаут - симуляция заняла слишком много времени")
+        except Exception as e:
+            print(f"      ❌ Ошибка: {e}")
+
+if __name__ == "__main__":
+    advanced_api_test()
+```
+
+## Ожидаемые результаты при успешной работе:
+
+### Для GET /api/v1/models:
+```json
+{
+  "models": [
+    {
+      "id": "model-id-1",
+      "name": "Service System Demo",
+      "latest_version_id": "version-id-1"
+    }
+  ]
+}
+```
+
+### Для POST /api/v1/simulations/run:
+```json
+{
+  "simulation_id": "sim-12345",
+  "server_capacity": 10,
+  "mean_queue_size": 2.5,
+  "server_utilization": 0.75,
+  "raw_outputs": {
+    "Mean queue size|Mean queue size": 2.5,
+    "Utilization|Server utilization": 0.75
+  },
+  "status": "completed"
+}
+```
+
+**Рекомендация для начинающих:** Начните с тестирования через Swagger UI (способ 1), затем переходите к Python скриптам для автоматизации тестирования.
