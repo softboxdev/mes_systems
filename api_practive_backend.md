@@ -120,6 +120,11 @@ class SimulationResponse(BaseModel):
 class ErrorResponse(BaseModel):
     error: str
     detail: Optional[str] = None
+
+class ModelInfo(BaseModel):
+    id: str
+    name: str
+    latest_version_id: Optional[str] = None
 ```
 
 ### 5. Зависимости и конфигурация
@@ -225,8 +230,8 @@ async def get_models(client: CloudClient = Depends(get_cloud_client)):
         for model in models:
             models_list.append({
                 "id": model.id,
-                "name": model.name,
-                "latest_version_id": model.latest_version.id if model.latest_version else None
+                "name": model.name
+                
             })
         
         return {"models": models_list}
