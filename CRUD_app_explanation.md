@@ -564,14 +564,14 @@ anylogic-fastapi-project/
 
 **requirements.txt:**
 ```txt
-fastapi==0.104.1
-uvicorn==0.24.0
-python-dotenv==1.0.0
-requests==2.31.0
-pydantic==2.5.0
-anylogiccloudclient==8.5.0
-sqlalchemy==2.0.23
-python-multipart==0.0.6
+fastapi
+uvicorn
+python-dotenv
+requests
+pydantic
+anylogiccloudclient
+sqlalchemy
+python-multipart
 ```
 
 ### 3. База данных для хранения результатов симуляций
